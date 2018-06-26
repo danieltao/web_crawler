@@ -1,8 +1,11 @@
 from urllib.request import urlopen, urlretrieve
 from bs4 import BeautifulSoup
 import os
+import threading
+import time
+import logging
 
-def getImage(url, folder):
+def getImage( url, folder):
     # check dir
     if not os.path.exists(folder):
         os.makedirs(folder)
@@ -21,7 +24,7 @@ def getImage(url, folder):
     for i in range(len(srcs)):
         urlretrieve(srcs[i], folder + str(i) + ".jpg")
 
-def crawlHupu(url, savepath, keywords=[]):
+def run(url, savepath, keywords):
     # load url
     page = urlopen(url)
     soup = BeautifulSoup(page, "html.parser")
@@ -57,7 +60,14 @@ def crawlHupu(url, savepath, keywords=[]):
 
 if __name__ == "__main__":
     keywords = ["美腿", "实战利器", "这波", "打分", "爆照"]
+    start = time.time()
     url = "https://bbs.hupu.com/selfie"
-    crawlHupu(url, savepath="./images/1/", keywords=keywords)
+    threads = []
     for i in range(1, 10):
-        crawlHupu(url + "-" + str(i + 1), savepath="./images/" + str(i) + "/", keywords=keywords)
+        t = threading.Thread(target=run, args=(url + "-" + str(i + 1), "./images/" + str(i) + "/", keywords))
+        t.start()
+        threads.append(t)
+    for thread in threads:
+        thread.join()
+    end = time.time()
+    print("the program uses " + str(end - start) + "seconds to run with 10 threads")
